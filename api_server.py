@@ -42,9 +42,22 @@ async def health_check():
 async def process_query(request: QueryRequest):
     try:
         result = await service.process_query(request.query)
-        return {"status": "success", "data": result}
+        # Transform agent service response to match our API model
+        if isinstance(result, dict):
+            return {
+                "status": "success",
+                "data": result.get("result", result)
+            }
+        return {
+            "status": "success",
+            "data": {"result": result} if result else None
+        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "status": "error",
+            "error": str(e),
+            "data": None
+        }
 
 # Run the server
 if __name__ == "__main__":
